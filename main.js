@@ -102,125 +102,6 @@ function ensureVendorCss(plugin) {
   return true;
 }
 
-class SpikeModal extends Modal {
-  constructor(app, plugin, json, diag) {
-    super(app);
-    this.plugin = plugin;
-    this.json = json;
-    this.diag = !!diag;
-  }
-
-  /** 把关键事实写到库根 .smmap-diag.txt（供诊断，不猜） */
-  dumpDiag(box) {
-    try {
-      const fs = require('fs');
-      const path = require('path');
-      const lines = [];
-      const dir = resolvePluginDir(this.plugin);
-      lines.push('dir=' + dir);
-      lines.push('css injected=' + !!document.getElementById('smmap-vendor-css') + ' len=' + (document.getElementById('smmap-vendor-css') ? document.getElementById('smmap-vendor-css').textContent.length : 0));
-      const rect = box.getBoundingClientRect();
-      lines.push('box rect=' + Math.round(rect.width) + 'x' + Math.round(rect.height));
-      lines.push('svg=' + box.querySelectorAll('svg').length + ' foreignObject=' + box.querySelectorAll('foreignObject').length + ' textNodes=' + box.querySelectorAll('text').length + ' divs=' + box.querySelectorAll('div').length);
-      const node = box.querySelector('.smm-node');
-      if (node) {
-        lines.push('node.tag=' + node.tagName + ' cls=' + node.getAttribute('class'));
-        lines.push('node.outerHTML=' + String(node.outerHTML).replace(/\s+/g, ' ').slice(0, 1600));
-      } else {
-        lines.push('no .smm-node；innerHTML 头 500：' + String(box.innerHTML).replace(/\s+/g, ' ').slice(0, 500));
-      }
-      const txt = box.querySelector('.smm-node-text') || box.querySelector('text') || box.querySelector('foreignObject div');
-      if (txt) {
-        const cs = window.getComputedStyle(txt);
-        const r2 = txt.getBoundingClientRect();
-        lines.push('txt.tag=' + txt.tagName + ' cls=' + txt.getAttribute('class'));
-        lines.push('txt computed: font-size=' + cs.fontSize + ' | font-family=' + cs.fontFamily + ' | line-height=' + cs.lineHeight + ' | color=' + cs.color + ' | visibility=' + cs.visibility + ' | overflow=' + cs.overflow);
-        lines.push('txt rect=' + Math.round(r2.width) + 'x' + Math.round(r2.height) + ' @' + Math.round(r2.left) + ',' + Math.round(r2.top));
-        lines.push('txt text=' + String(txt.textContent).slice(0, 120));
-      }
-      lines.push('head style ids=' + Array.from(document.querySelectorAll('style[id]')).map((s) => s.id).slice(0, 12).join(','));
-      const base = this.plugin.app.vault.adapter.getBasePath();
-      const out = path.join(base, '.smmap-diag.txt');
-      fs.writeFileSync(out, lines.join('\n'), 'utf8');
-      console.log('[simple-mindmap] 诊断已写入 ' + out);
-      new Notice('诊断已写入库根 .smmap-diag.txt', 8000);
-    } catch (e) {
-      console.error('[simple-mindmap] 写诊断失败', e);
-      new Notice('写诊断失败：' + (e && e.message ? e.message : e), 10000);
-    }
-  }
-
-  onOpen() {
-    const t0 = Date.now();
-    try {
-      ensureVendorCss(this.plugin);
-    } catch (e) {
-      console.error('[simple-mindmap] 注入 vendor CSS 失败', e);
-    }
-    this.contentEl.empty();
-    this.contentEl.style.height = '70vh';
-    const box = this.contentEl.createDiv({ cls: 'smmap-spike-canvas' });
-    box.style.width = '100%';
-    box.style.height = '100%';
-
-    let Ctor = null;
-    try {
-      const lib = loadLibrary(this.plugin);
-      Ctor = pickMindMapCtor(lib);
-      const names = Object.keys(lib || {}).slice(0, 12).join(', ');
-      console.log('[simple-mindmap] 导出键：', names);
-      if (!Ctor) {
-        new Notice('库已载入但找不到 MindMap 构造函数（控制台有导出键）', 10000);
-        box.setText('导出键：' + names);
-        return;
-      }
-    } catch (e) {
-      console.error('[simple-mindmap] 载入库失败', e);
-      new Notice('载入库失败：' + (e && e.message ? e.message : e), 12000);
-      box.setText('载入库失败：' + (e && e.message ? e.message : e));
-      return;
-    }
-
-    try {
-      this.mindMap = new Ctor({
-        el: box,
-        data: this.json,
-        layout: 'logicalStructure',
-        theme: 'classic',
-      });
-      if (this.mindMap && typeof this.mindMap.render === 'function') this.mindMap.render();
-      // 容器可能尚未真正挂进文档 → 库按"文字宽度 0"排版，字会被裁掉。
-      // 下一帧（文档已挂载）重算一次尺寸即可恢复。
-      const mm = this.mindMap;
-      window.setTimeout(() => {
-        try {
-          if (mm && typeof mm.resize === 'function') mm.resize();
-          console.log('[simple-mindmap] 已重算尺寸（resize）');
-          if (this.diag) window.setTimeout(() => this.dumpDiag(box), 300);
-        } catch (e) {
-          console.error('[simple-mindmap] resize 失败', e);
-        }
-      }, 60);
-      const ms = Date.now() - t0;
-      new Notice('M0 v2 成功：库已载入并渲染（' + ms + 'ms）', 8000);
-      console.log('[simple-mindmap] M0 v2 渲染成功，总耗时 ' + ms + 'ms');
-    } catch (e) {
-      console.error('[simple-mindmap] 渲染失败', e);
-      new Notice('渲染失败：' + (e && e.message ? e.message : e), 12000);
-      box.setText('渲染失败：' + (e && e.message ? e.message : e));
-    }
-  }
-
-  onClose() {
-    try {
-      if (this.mindMap && typeof this.mindMap.destroy === 'function') this.mindMap.destroy();
-    } catch (e) {
-      /* 清理失败不影响关闭 */
-    }
-    this.mindMap = null;
-    this.contentEl.empty();
-  }
-}
 
 /* ============================================================================
  * M1：md ↔ 树 的纯函数（无副作用、可单测）
@@ -858,64 +739,32 @@ class SimpleMindmapPlugin extends Plugin {
     // 刻意不读盘、不加载库（单测守这条）
 
     // ① 环境探测：fs 是否可用 + 插件绝对目录 + vendor 是否就位
-    this.addCommand({
-      id: 'm0-probe',
-      name: 'M0：探测加载环境（fs / 插件目录）',
-      callback: () => {
-        const parts = [];
-        try {
-          const fs = require('fs');
-          const path = require('path');
-          const raw = (this.manifest && this.manifest.dir) || '';
-          const base = (typeof this.app.vault.adapter.getBasePath === 'function' ? this.app.vault.adapter.getBasePath() : this.app.vault.adapter.basePath) || '';
-          const dir = raw && path.isAbsolute(raw) ? raw : path.join(base, raw);
-          parts.push('fs ✓');
-          parts.push('dir=' + dir);
-          const file = path.join(dir, 'vendor', VENDOR_CJS);
-          parts.push('vendor 存在=' + fs.existsSync(file));
-          if (fs.existsSync(file)) parts.push('大小=' + fs.statSync(file).size + 'B');
-          new Notice('探测：' + parts.join(' · '), 12000);
-          console.log('[simple-mindmap] probe', parts.join(' | '));
-        } catch (e) {
-          new Notice('探测失败：' + (e && e.message ? e.message : e), 12000);
-          console.error('[simple-mindmap] probe failed', e);
-        }
-      },
-    });
+    
 
     // ② spike：读文件 + new Function 执行 + 渲染
-    this.addCommand({
-      id: 'm0-render',
-      name: 'M0：载入库并画一张测试图',
-      callback: () => {
-        const data = {
-          data: { text: '中心主题' },
-          children: [
-            { data: { text: '分支 A' }, children: [{ data: { text: '叶子 1' } }, { data: { text: '叶子 2' } }] },
-            { data: { text: '分支 B' }, children: [] },
-          ],
-        };
-        new SpikeModal(this.app, this, data).open();
-      },
-    });
+    
 
     // ②b 诊断：画图并导出关键事实
+    
+
+    // ③ smmap 代码块 → 笔记里内联渲染（只读；数据来自笔记本身）
+    // ⑤ 插入 smmap 导图块（真正的用户命令）    // ⑤ 插入 smmap 导图块（不依赖编辑器上下文 → 命令面板里始终可见）
     this.addCommand({
-      id: 'm0-diag',
-      name: 'M0：画图并导出诊断文件',
+      id: 'insert-smmap-block',
+      name: '插入 smmap 导图块',
       callback: () => {
-        const data = {
-          data: { text: '中心主题' },
-          children: [
-            { data: { text: '分支 A' }, children: [{ data: { text: '叶子 1' } }, { data: { text: '叶子 2' } }] },
-            { data: { text: '分支 B' }, children: [] },
-          ],
-        };
-        new SpikeModal(this.app, this, data, true).open();
+        const active = this.app.workspace.activeEditor;
+        const editor = active && active.editor;
+        if (!editor) {
+          new Notice('先打开一篇 markdown 笔记，再执行这个命令');
+          return;
+        }
+        const skeleton = '- 中心主题\n  - 分支 A\n    - 叶子 1\n  - 分支 B\n---\nlayout: logicalStructure\ntheme: classic\nheight: 360';
+        editor.replaceRange('```smmap\n' + skeleton + '\n```\n', editor.getCursor('from'));
+        new Notice('已插入 smmap 块：改里面的缩进列表即可，或用「编辑当前笔记的导图」', 8000);
       },
     });
 
-    // ③ smmap 代码块 → 笔记里内联渲染（只读；数据来自笔记本身）
     // ④ 编辑当前笔记的导图：改完点保存 → 只替换 smmap 围栏（安全写回）
     this.addCommand({
       id: 'edit-current-note',

@@ -11,3 +11,7 @@ Get-ChildItem (Join-Path $repo 'vendor') -File | ForEach-Object { Copy-Item $_.F
 node --check (Join-Path $dst 'main.js')
 Write-Host ('deployed to ' + $dst)
 Get-ChildItem $dst -Recurse -File | ForEach-Object { '  {0,-34} {1,10:N0} B' -f $_.FullName.Replace($dst + '\',''), $_.Length }
+# prune stale vendor files so the vault matches the repo exactly
+Get-ChildItem (Join-Path $dst 'vendor') -File | ForEach-Object {
+  if (-not (Test-Path (Join-Path $repo ('vendor\' + $_.Name)))) { Remove-Item $_.FullName -Force }
+}

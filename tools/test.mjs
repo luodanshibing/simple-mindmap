@@ -41,7 +41,7 @@ ok(desc.length > 0 && desc.indexOf('\n') < 0 && (desc.match(/。/g) || []).lengt
 
 /* ---------- 2. vendor 就位（体积即完整性校验） ---------- */
 const VENDOR = [
-  ['vendor/mind-map.cjs.js', 1609621],
+  ['vendor/mind-map.core.cjs.js', 343688],
   ['vendor/mind-map.esm.js', 1605792],
   ['vendor/mind-map.css', 24470],
   ['vendor/probe.js', null],

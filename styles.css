@@ -1,0 +1,60 @@
+/* simple-mindmap · M0 只用得到的少量样式 */
+.smmap-spike-canvas {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.smmap-block {
+  border: 1px dashed var(--background-modifier-border);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+.smmap-block-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.smmap-block-pre {
+  margin: 0;
+  max-height: 240px;
+  overflow: auto;
+  font-size: 12px;
+}
+/* Rich-text node content is HTML inside <foreignObject>. The library's own reset
+   did not reach .smm-richtext-node-wrap, so the default <p> margin (~1em = 16px)
+   pushed the glyphs out of the 20px-tall box and the text rendered clipped.
+   Measured via .smmap-diag.txt: txt rect=65x19 @869,537 (layout fine, rendering clipped). */
+.smm-richtext-node-wrap,
+.smm-richtext-node-wrap p,
+.smm-richtext-node-wrap div,
+.smm-richtext-node-wrap span {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.smm-richtext-node-wrap p {
+  line-height: 1.2;
+}
+
+foreignObject {
+  overflow: visible;
+}
+/* M2: inline smmap embed */
+.smmap-embed {
+  margin: 6px 0;
+}
+.smmap-canvas {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--background-primary);
+}
+.smmap-error {
+  padding: 8px 10px;
+  font-size: 12px;
+  color: var(--text-error);
+  border: 1px dashed var(--text-error);
+  border-radius: 8px;
+}
+
+.smmap-textedit-input { width: 100%; min-height: 84px; font-size: 14px; }

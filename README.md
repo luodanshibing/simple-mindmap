@@ -36,8 +36,10 @@ height: 360
 
 - 缩进 2/4 空格或 Tab 均可；列表符号支持 `-` `*` `+`
 - 节点文字里的行内 markdown（`**粗体**`、`[[链接]]`）原样保留
-- 样式段（`---` 之后）**可整段省略**，省略时用默认：`logicalStructure` / `classic` / 320px
-- 可用样式键：`layout`（`logicalStructure` / `mindMap` / `organizationStructure` / `timeline` / `fishbone` 等）、`theme`、`height`
+- 样式段（`---` 之后）**可整段省略**，省略时用默认：`layout: mindMap`、高度 320px
+- **`layout` 可选值（已在产物中逐个核实）**：`mindMap`（默认，左右对称）、`logicalStructure`（逻辑结构）、`organizationStructure`（组织架构）、`timeline`、`verticalTimeline`、`fishbone`
+- **`height`**：渲染高度（px），如 `height: 360`
+- **`theme`**：核心库只带默认主题，写别的值会被忽略（不报错）—— 因此实际只需 `layout` 与 `height`
 
 ## 安装
 

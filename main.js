@@ -419,7 +419,7 @@ class SimpleMindmapPlugin extends Plugin {
     // ⑤ 插入 smmap 导图块（真正的用户命令）    // ⑤ 插入 smmap 导图块（不依赖编辑器上下文 → 命令面板里始终可见）
     this.addCommand({
       id: 'insert-smmap-block',
-      name: '插入 smmap 导图块',
+      name: '插入导图块',
       callback: () => {
         const active = this.app.workspace.activeEditor;
         const editor = active && active.editor;

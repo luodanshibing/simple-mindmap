@@ -1,9 +1,9 @@
 {
-    "id":  "simple-mindmap",
-    "name":  "Simple Mindmap",
-    "version": "0.2.0",
-    "minAppVersion":  "1.8.3",
-    "description":  "把笔记里的 smmap 代码块渲染成思维导图，数据只留在笔记里。",
-    "author":  "luodanshibing",
-    "isDesktopOnly":  false
+  "id": "simple-mindmap",
+  "name": "Simple Mindmap",
+  "version": "0.2.1",
+  "minAppVersion": "1.8.3",
+  "description": "把笔记里的 smmap 代码块渲染成思维导图，数据只留在笔记里。",
+  "author": "luodanshibing",
+  "isDesktopOnly": false
 }
